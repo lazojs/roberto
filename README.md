@@ -6,6 +6,11 @@
 
 Merges application dependencies configurations.
 
+## Merge Order
+
+1. `app.json` and `conf.json` files found in the module distribution
+2. `package.json` meta data
+
 ## Example Dependencies
 
 ```javascript
@@ -24,18 +29,36 @@ Merges application dependencies configurations.
     },
     "lazo": {
         "application": "dist",
+        "app": {
+            "js": ["app/app2"]
+        },
+        "conf": {
+            "requirejs": {
+                "common": {
+                    "paths": {
+                        "appModule1": "app/module1/index"
+                    }
+                }
+            }
+        },
         "dependencies": {
             "underscore": [{
                 "install": "common",
                 "moduleId": "underscore",
                 "conf": {
-                    "shim": {
-                        "underscore": {
-                            "exports": "_"
+                    "requirejs": {
+                        "common": {
+                            "paths": {
+                                "underscore": "app/underscore/index"
+                            }
+                        },
+                        "client": {
+                            "shim": {
+                                "underscore": {
+                                    "exports": "_"
+                                }
+                            }
                         }
-                    },
-                    "paths": {
-                        "underscore": "app/underscore/index"
                     }
                 }
             }]
@@ -47,7 +70,7 @@ Merges application dependencies configurations.
 ## Usage
 
 ```javascript
-var fabricio = require('fabricio');
+var roberto = require('roberto');
 
 // arguments
 // 1. directory to scan
@@ -65,8 +88,8 @@ roberto('test/application/node_modules', {}, function (err, results) {
 { app:
    { routes: { '': 'home-cmp', 'login(/)': 'login-cmp' },
      css: [ 'app/skin.css', 'app/app.css' ],
-     js: [ 'app/app.js', 'moduleId1' ] },
-  conf: { requirejs: { paths: [Object], shim: [Object] } },
+     js: [ 'app/app', 'moduleId1', 'app/app2' ] },
+  conf: { requirejs: { common: [Object], client: [Object] } },
   modules:
    [ { dependencies: undefined,
        name: 'app-test1',

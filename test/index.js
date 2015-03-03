@@ -14,9 +14,9 @@ describe('roberto', function () {
 
             chai.expect(_.size(results.app.routes)).to.be.equal(2);
             chai.expect(results.app.css.length).to.be.equal(2);
-            chai.expect(results.app.js.length).to.be.equal(2);
-            chai.expect(_.size(results.conf.requirejs.paths)).to.be.equal(2);
-            chai.expect(results.conf.requirejs.shim.underscore).to.be.Object;
+            chai.expect(results.app.js.length).to.be.equal(3);
+            chai.expect(_.size(results.conf.requirejs.common.paths)).to.be.equal(3);
+            chai.expect(results.conf.requirejs.client.shim.underscore).to.be.Object;
             chai.expect(results.modules.length).to.be.equal(2);
             done();
         });
