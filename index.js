@@ -36,7 +36,7 @@ function mapOptions(options) {
 
 function transformData(lists) {
     var retVal = {};
-    lists.modules.forEach(function (module) {
+    lists.modules.forEach(function (module, merged) {
         retVal[module.name] = {
             version: module.version,
             data: module.data,
@@ -55,15 +55,47 @@ function mergeArrays(a, b) {
     }
 }
 
+function mergePackageMetaData(merged, options) {
+    merged.modules.forEach(function (module) {
+        if (module.lazo.conf) {
+            module.conf.conf = _.merge(module.conf.conf, module.lazo.conf, mergeArrays);
+            merged.conf = _.merge(merged.conf, module.lazo.conf, mergeArrays);
+        }
+        if (module.lazo.app) {
+            module.conf.app = _.merge(module.conf.app, module.lazo.app, mergeArrays);
+            merged.app = _.merge(merged.app, module.lazo.app, mergeArrays);
+        }
+
+        if (module.dependencies) {
+            for (var k in module.dependencies) {
+                module.dependencies[k].forEach(function (dependency) {
+                    if (dependency.moduleId) {
+                        dependency = resolveInsallLocation(dependency, k, options);
+                    }
+                    if (dependency.conf) {
+                        merged.conf = _.merge(merged.conf, dependency.conf, mergeArrays);
+                        module.conf.conf = _.merge(module.conf.conf, dependency.conf, mergeArrays);
+                    }
+                });
+            }
+        }
+    });
+}
+
 function resolveInsallLocation(dependency, moduleName, options) {
     var installPathPrefix = options.installSchema[dependency.install];
+    var key = dependency.install;
+    var paths;
 
     dependency.conf = dependency.conf || {};
-    dependency.conf.paths = dependency.conf.paths || {};
-    dependency.conf.paths[dependency.moduleId] = installPathPrefix + '/' + moduleName +
+    dependency.conf.requirejs = dependency.conf.requirejs || {};
+    dependency.conf.requirejs[key] = dependency.conf[key] || {};
+    dependency.conf.requirejs[key] = dependency.conf.requirejs[key] || {};
+    paths = dependency.conf.requirejs[key].paths = dependency.conf.requirejs[key].paths || {};
+    paths[dependency.moduleId] = installPathPrefix + '/' + moduleName +
         '/' + (dependency.main || dependency.module.data.main);
-    dependency.conf.paths[dependency.moduleId] = dependency.conf.paths[dependency.moduleId].substr(0,
-        dependency.conf.paths[dependency.moduleId].lastIndexOf('.js'));
+    paths[dependency.moduleId] = paths[dependency.moduleId].substr(0,
+        paths[dependency.moduleId].lastIndexOf('.js'));
 
     return dependency;
 }
@@ -87,6 +119,11 @@ module.exports = function (modulesDir, options, callback) {
                 tasks.push(function (callback) {
                     var contents = [];
 
+                    modules[i].conf = {
+                        app: {},
+                        conf: {}
+                    };
+
                     dir.readFiles(options.distResolver(module), mapOptions(options), function (err, content, next) {
                         if (err) {
                             return callback(err, null);
@@ -103,23 +140,7 @@ module.exports = function (modulesDir, options, callback) {
                                 var key = options.fileSrcKeyResolver(file);
                                 var parsedContents = JSON.parse(contents[i]);
                                 merged[key] = _.merge(merged[key] || {}, parsedContents, mergeArrays);
-                                modules[i].conf = modules[i].conf || {};
                                 modules[i].conf[key] = parsedContents;
-                                merged.modules.push(modules[i]);
-                                if (modules[i].dependencies) {
-                                    for (var k in modules[i].dependencies) {
-                                        modules[i].dependencies[k].forEach(function (dependency) {
-                                            if (dependency.moduleId) {
-                                                dependency = resolveInsallLocation(dependency, k, options);
-                                            }
-                                            if (dependency.conf) {
-                                                merged.conf = _.merge(merged.conf, {
-                                                    requirejs: dependency.conf
-                                                }, mergeArrays);
-                                            }
-                                        });
-                                    }
-                                }
                             } catch (e) {
                                 return callback(e, null);
                             }
@@ -135,10 +156,8 @@ module.exports = function (modulesDir, options, callback) {
                     return callback(err, null);
                 }
 
-                merged.modules = _.uniq(merged.modules, function (module) {
-                    return module.name;
-                });
-
+                merged.modules = modules;
+                mergePackageMetaData(merged, options);
                 callback(null, merged);
             });
         });
