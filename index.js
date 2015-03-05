@@ -92,10 +92,12 @@ function resolveInsallLocation(dependency, moduleName, options) {
     dependency.conf.requirejs[key] = dependency.conf[key] || {};
     dependency.conf.requirejs[key] = dependency.conf.requirejs[key] || {};
     paths = dependency.conf.requirejs[key].paths = dependency.conf.requirejs[key].paths || {};
-    paths[dependency.moduleId] = installPathPrefix + '/' + moduleName +
-        '/' + (dependency.main || dependency.module.data.main);
-    paths[dependency.moduleId] = paths[dependency.moduleId].substr(0,
-        paths[dependency.moduleId].lastIndexOf('.js'));
+    // create rjs path
+    paths[dependency.moduleId] = path.join(installPathPrefix, moduleName, (dependency.main || dependency.module.data.main));
+    // remove file extension
+    paths[dependency.moduleId] = paths[dependency.moduleId].substr(0, paths[dependency.moduleId].lastIndexOf('.js'));
+    // account for windows path.join
+    paths[dependency.moduleId] = paths[dependency.moduleId].replace(/\\/g, '/');
 
     return dependency;
 }
