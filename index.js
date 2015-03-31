@@ -137,10 +137,10 @@ module.exports = function (modulesDir, options, callback) {
                             return callback(err, null);
                         }
 
-                        files.forEach(function (file, i) {
+                        files.forEach(function (file, j) {
                             try {
                                 var key = options.fileSrcKeyResolver(file);
-                                var parsedContents = JSON.parse(contents[i]);
+                                var parsedContents = JSON.parse(contents[j]);
                                 merged[key] = _.merge(merged[key] || {}, parsedContents, mergeArrays);
                                 modules[i].conf[key] = parsedContents;
                             } catch (e) {
