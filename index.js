@@ -113,7 +113,7 @@ module.exports = function (modulesDir, options, callback) {
             return callback(err, null);
         }
 
-        fabricio(transformData(results), null, function (err, modules) {
+        fabricio(transformData(results), _.pick(options, ['excludeDir']), function (err, modules) {
             if (err) {
                 return callback(err, null);
             }
