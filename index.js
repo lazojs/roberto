@@ -5,6 +5,7 @@ var _ = require('lodash');
 var async = require('async');
 var dir = require('node-dir');
 var defaults = {
+    excludeDir: /test/,
     installSchema: {
         client: path.join('app', 'client'),
         server: path.join('app', 'server'),
